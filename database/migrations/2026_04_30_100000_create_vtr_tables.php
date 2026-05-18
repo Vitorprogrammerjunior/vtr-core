@@ -94,7 +94,7 @@ return new class extends Migration {
             $t->string('nome'); // ex: "Peito + Tríceps"
             $t->string('grupo_muscular')->nullable();
             $t->unsignedTinyInteger('dia_semana')->nullable(); // 1=seg ... 7=dom
-            $t->string('intensidade', 20)->nullable(); // leve | moderado | intenso
+            $t->string('intensidade', 100)->nullable();
             $t->string('icone', 30)->nullable(); // dumbbell | biceps | run...
             $t->boolean('ativo')->default(true);
             $t->unsignedSmallInteger('ordem')->default(0);
