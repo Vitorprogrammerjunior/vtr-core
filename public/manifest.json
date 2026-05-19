@@ -19,7 +19,33 @@
             "src": "/icon-512.png",
             "sizes": "512x512",
             "type": "image/png",
-            "purpose": "any maskable"
+            "purpose": "maskable"
+        }
+    ],
+    "shortcuts": [
+        {
+            "name": "Dashboard",
+            "short_name": "Início",
+            "url": "/dashboard",
+            "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+        },
+        {
+            "name": "Alimentação",
+            "short_name": "Comida",
+            "url": "/alimentacao",
+            "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+        },
+        {
+            "name": "Treinos",
+            "short_name": "Treino",
+            "url": "/treinos",
+            "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+        },
+        {
+            "name": "Anotações",
+            "short_name": "Notas",
+            "url": "/anotacoes",
+            "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
         }
     ]
 }

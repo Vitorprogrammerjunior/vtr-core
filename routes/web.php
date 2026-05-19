@@ -13,6 +13,7 @@ use App\Http\Controllers\AnotacoesController;
 use App\Http\Controllers\AlimentacaoController;
 use App\Http\Controllers\BooksController;
 use App\Http\Controllers\PagesController;
+use App\Http\Controllers\PushController;
 use App\Http\Controllers\MealsController;
 use Illuminate\Support\Facades\Route;
 
@@ -60,4 +61,9 @@ Route::middleware('auth')->group(function () {
     Route::post('/alimentacao/refeicoes/{meal}/toggle', [MealsController::class, 'toggle'])->name('refeicoes.toggle');
     Route::post('/alimentacao/agua', [MealsController::class, 'water'])->name('agua.store');
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+
+    // Push Notifications
+    Route::post('/push/subscribe', [PushController::class, 'subscribe'])->name('push.subscribe');
+    Route::post('/push/unsubscribe', [PushController::class, 'unsubscribe'])->name('push.unsubscribe');
+    Route::post('/push/send', [PushController::class, 'send'])->name('push.send');
 });

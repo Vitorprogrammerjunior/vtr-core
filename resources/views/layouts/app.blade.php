@@ -135,6 +135,57 @@
             _pwaPrompt.prompt();
             _pwaPrompt.userChoice.then(function() { _pwaPrompt = null; });
         }
+
+        // Push Notifications
+        const VAPID_PUBLIC = '{{ config("services.vapid.public_key") }}';
+
+        function urlBase64ToUint8Array(base64String) {
+            const padding = '='.repeat((4 - base64String.length % 4) % 4);
+            const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+            const rawData = atob(base64);
+            return Uint8Array.from([...rawData].map(c => c.charCodeAt(0)));
+        }
+
+        async function vtrRequestNotifications() {
+            if (!('Notification' in window) || !('serviceWorker' in navigator)) return;
+            const permission = await Notification.requestPermission();
+            if (permission !== 'granted') return;
+
+            const reg = await navigator.serviceWorker.ready;
+            let sub = await reg.pushManager.getSubscription();
+            if (!sub) {
+                sub = await reg.pushManager.subscribe({
+                    userVisibleOnly: true,
+                    applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC)
+                });
+            }
+
+            const key  = sub.getKey('p256dh');
+            const auth = sub.getKey('auth');
+
+            await fetch('/push/subscribe', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content
+                },
+                body: JSON.stringify({
+                    endpoint: sub.endpoint,
+                    p256dh:   key  ? btoa(String.fromCharCode(...new Uint8Array(key)))  : null,
+                    auth:     auth ? btoa(String.fromCharCode(...new Uint8Array(auth))) : null,
+                })
+            });
+
+            document.getElementById('vtr-notif-btn').style.display = 'none';
+        }
+
+        // Mostra botão se notificações ainda não foram ativadas
+        if ('Notification' in window && Notification.permission !== 'granted') {
+            document.addEventListener('DOMContentLoaded', function() {
+                var nb = document.getElementById('vtr-notif-btn');
+                if (nb) nb.style.display = 'flex';
+            });
+        }
     </script>
 
     {{-- Botão flutuante de instalar PWA --}}
@@ -148,6 +199,19 @@
             <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3"/>
         </svg>
         INSTALAR APP
+    </button>
+
+    {{-- Botão flutuante de ativar notificações --}}
+    <button id="vtr-notif-btn" onclick="vtrRequestNotifications()" title="Ativar notificações"
+        style="display:none; position:fixed; bottom:80px; right:24px; z-index:9999;
+               align-items:center; gap:8px; padding:10px 18px;
+               background:#1a1a1a; color:#fff; border:1px solid #333; border-radius:8px;
+               font-family:'Rajdhani',sans-serif; font-weight:700; font-size:0.9rem;
+               letter-spacing:0.08em; cursor:pointer; box-shadow:0 4px 20px rgba(0,0,0,0.4);">
+        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 10-12 0v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+        </svg>
+        NOTIFICAÇÕES
     </button>
 </body>
 </html>
