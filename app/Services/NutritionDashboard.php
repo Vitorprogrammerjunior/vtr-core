@@ -43,11 +43,43 @@ class NutritionDashboard
 
         $statusHoje = $this->statusHoje($consistencia, $hidratacao, $diaConcluido, $amanha);
 
+        $proteina = $this->proteina($data);
+
         return compact(
             'hidratacao',
+            'proteina',
             'refeicoes', 'proximaRefeicao', 'consistencia',
             'cardapioSemanal', 'diaConcluido', 'amanha', 'statusHoje'
         );
+    }
+
+    /**
+     * Proteína consumida hoje vs meta (peso_kg × 2, ou meta_proteina_g do perfil).
+     */
+    private function proteina(string $data): array
+    {
+        $consumida = (int) MealLog::whereDate('data', $data)
+            ->where('feita', true)
+            ->join('meals', 'meal_logs.meal_id', '=', 'meals.id')
+            ->selectRaw('SUM(COALESCE(meal_logs.proteina_g, meals.proteina_g, 0)) as total')
+            ->value('total');
+
+        $meta = $this->profile->peso_kg
+            ? (int) round((float) $this->profile->peso_kg * 2)
+            : (int) ($this->profile->meta_proteina_g ?: 150);
+
+        $percent = $meta > 0 ? (int) round(min(100, ($consumida / $meta) * 100)) : 0;
+
+        $baseCalculo = $this->profile->peso_kg
+            ? number_format((float) $this->profile->peso_kg, 1, ',', '.') . ' kg × 2g'
+            : 'meta manual';
+
+        return [
+            'consumida'     => $consumida,
+            'meta'          => $meta,
+            'percent'       => $percent,
+            'base_calculo'  => $baseCalculo,
+        ];
     }
 
     private function hidratacao(?WaterLog $w): array
@@ -131,12 +163,13 @@ class NutritionDashboard
                 ->filter(fn (Meal $m) => $m->dia_semana === null || (int) $m->dia_semana === $i)
                 ->sortBy(fn (Meal $m) => $m->horario ?? '99:99')
                 ->map(fn (Meal $m) => [
-                    'id'        => $m->id,
-                    'nome'      => $m->nome,
-                    'horario'   => $m->horario ? substr($m->horario, 0, 5) : '',
-                    'descricao' => $m->descricao ?? '',
-                    'icone'     => $m->icone ?: 'cutlery',
-                    'fixa'      => $m->dia_semana === null,
+                    'id'         => $m->id,
+                    'nome'       => $m->nome,
+                    'horario'    => $m->horario ? substr($m->horario, 0, 5) : '',
+                    'descricao'  => $m->descricao ?? '',
+                    'icone'      => $m->icone ?: 'cutlery',
+                    'fixa'       => $m->dia_semana === null,
+                    'proteina_g' => (int) ($m->proteina_g ?? 0),
                 ])
                 ->values()
                 ->all();

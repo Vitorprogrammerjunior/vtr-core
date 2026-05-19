@@ -55,6 +55,7 @@ Route::middleware('auth')->group(function () {
     Route::put('/anotacoes/paginas/{page}', [PagesController::class, 'update'])->name('paginas.update');
     Route::delete('/anotacoes/paginas/{page}', [PagesController::class, 'destroy'])->name('paginas.destroy');
     Route::get('/alimentacao', [AlimentacaoController::class, 'index'])->name('alimentacao');
+    Route::put('/alimentacao/perfil', [AlimentacaoController::class, 'updatePerfil'])->name('perfil.update');
     Route::post('/alimentacao/refeicoes', [MealsController::class, 'store'])->name('refeicoes.store');
     Route::put('/alimentacao/refeicoes/{meal}', [MealsController::class, 'update'])->name('refeicoes.update');
     Route::delete('/alimentacao/refeicoes/{meal}', [MealsController::class, 'destroy'])->name('refeicoes.destroy');

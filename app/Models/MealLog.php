@@ -13,9 +13,10 @@ class MealLog extends Model
     protected $guarded = [];
 
     protected $casts = [
-        'data'  => 'date',
-        'feita' => 'bool',
-        'kcal'  => 'int',
+        'data'       => 'date',
+        'feita'      => 'bool',
+        'kcal'       => 'int',
+        'proteina_g' => 'int',
     ];
 
     public function meal(): BelongsTo { return $this->belongsTo(Meal::class); }

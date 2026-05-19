@@ -21,6 +21,7 @@ class Meal extends Model
         'ativo'      => 'bool',
         'ordem'      => 'int',
         'dia_semana' => 'int',
+        'proteina_g' => 'int',
     ];
 
     public function logs(): HasMany { return $this->hasMany(MealLog::class); }

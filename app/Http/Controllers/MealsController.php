@@ -18,6 +18,7 @@ class MealsController extends Controller
             'descricao'  => ['nullable', 'string', 'max:160'],
             'icone'      => ['nullable', Rule::in(self::ICONES)],
             'dia_semana' => ['nullable', 'integer', 'between:0,6'],
+            'proteina_g' => ['nullable', 'integer', 'between:0,999'],
         ]);
 
         $ordem = (int) (Meal::max('ordem') ?? 0) + 1;
@@ -28,6 +29,7 @@ class MealsController extends Controller
             'descricao'  => $data['descricao'] ?? null,
             'icone'      => $data['icone'] ?? 'cutlery',
             'dia_semana' => $data['dia_semana'] ?? null,
+            'proteina_g' => $data['proteina_g'] ?? 0,
             'ativo'      => true,
             'ordem'      => $ordem,
         ]);
@@ -43,6 +45,7 @@ class MealsController extends Controller
             'descricao'  => ['nullable', 'string', 'max:160'],
             'icone'      => ['nullable', Rule::in(self::ICONES)],
             'dia_semana' => ['nullable', 'integer', 'between:0,6'],
+            'proteina_g' => ['nullable', 'integer', 'between:0,999'],
         ]);
 
         $meal->update([
@@ -51,6 +54,7 @@ class MealsController extends Controller
             'descricao'  => $data['descricao'] ?? $meal->descricao,
             'icone'      => $data['icone'] ?? $meal->icone,
             'dia_semana' => array_key_exists('dia_semana', $data) ? $data['dia_semana'] : $meal->dia_semana,
+            'proteina_g' => $data['proteina_g'] ?? $meal->proteina_g,
         ]);
 
         return back()->with('status', 'Refeição atualizada.');
@@ -72,9 +76,10 @@ class MealsController extends Controller
             $log->update(['feita' => ! $log->feita]);
         } else {
             MealLog::create([
-                'meal_id' => $meal->id,
-                'data'    => $hoje,
-                'feita'   => true,
+                'meal_id'    => $meal->id,
+                'data'       => $hoje,
+                'feita'      => true,
+                'proteina_g' => $meal->proteina_g ?? 0,
             ]);
         }
 

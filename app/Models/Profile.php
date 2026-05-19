@@ -16,6 +16,7 @@ class Profile extends Model
         'meta_carbo_g'      => 'int',
         'meta_gordura_g'    => 'int',
         'meta_agua_litros'  => 'decimal:1',
+        'peso_kg'           => 'decimal:1',
     ];
 
     public function user(): BelongsTo { return $this->belongsTo(User::class); }

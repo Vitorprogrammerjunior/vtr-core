@@ -20,4 +20,16 @@ class AlimentacaoController extends Controller
             $data
         ));
     }
+
+    public function updatePerfil(Request $request)
+    {
+        $data = $request->validate([
+            'peso_kg' => ['nullable', 'numeric', 'between:30,300'],
+        ]);
+
+        $profile = Profile::firstOrCreate(['user_id' => $request->user()->id]);
+        $profile->update(['peso_kg' => $data['peso_kg'] ?: null]);
+
+        return back()->with('status', 'Peso atualizado.');
+    }
 }

@@ -72,6 +72,9 @@
                 </blockquote>
             </div>
 
+            {{-- HIDRATAÇÃO + PROTEÍNA (coluna direita empilhadas) --}}
+            <div class="flex flex-col gap-5">
+
             {{-- HIDRATAÇÃO --}}
             <div class="vtr-card vtr-corner p-5 md:p-6 relative">
                 <h2 class="font-display tracking-[0.25em] text-sm flex items-center gap-3 mb-5">
@@ -107,6 +110,36 @@
                     <span class="font-display text-vtr-red">{{ $hidratacao['percent'] }}%</span>
                 </div>
             </div>
+
+            {{-- PROTEÍNA --}}
+            <div class="vtr-card vtr-corner p-5 md:p-6 relative">
+                <h2 class="font-display tracking-[0.25em] text-sm flex items-center gap-3 mb-4">
+                    <span class="vtr-divider"></span> PROTEÍNA
+                </h2>
+                <button type="button" data-modal-target="modal-peso"
+                        class="absolute top-4 right-4 text-[10px] tracking-[0.22em] text-vtr-muted hover:text-vtr-red font-display uppercase transition-colors">
+                    {{ $profile->peso_kg ? number_format((float)$profile->peso_kg, 1, ',', '.') . ' kg' : 'Definir peso' }}
+                </button>
+
+                <div class="font-display text-3xl">
+                    {{ $proteina['consumida'] }}<span class="text-vtr-muted text-xl">g</span>
+                    <span class="text-vtr-muted text-xl"> / {{ $proteina['meta'] }}g</span>
+                </div>
+                <div class="text-[10px] tracking-[0.22em] text-vtr-muted mt-1">
+                    META DIÁRIA · {{ mb_strtoupper($proteina['base_calculo']) }}
+                </div>
+
+                <div class="vtr-progress mt-5"><span style="width: {{ $proteina['percent'] }}%"></span></div>
+                <div class="mt-2 flex items-center justify-between text-[11px]">
+                    <span class="flex items-center gap-2 text-vtr-muted tracking-[0.18em]">
+                        @include('partials.icon', ['name' => 'dumbbell', 'class' => 'w-3.5 h-3.5'])
+                        CONSUMO ESTIMADO
+                    </span>
+                    <span class="font-display text-vtr-red">{{ $proteina['percent'] }}%</span>
+                </div>
+            </div>
+
+            </div>{{-- /coluna direita --}}
         </div>
 
         {{-- ========== CARDÁPIO SEMANAL (full width) ========== --}}
@@ -354,6 +387,11 @@
             <span class="text-[10px] tracking-[0.22em] text-vtr-muted uppercase">Descrição</span>
             <input type="text" name="descricao" maxlength="160" placeholder="Ex.: Tapioca + ovos" class="vtr-input mt-1.5">
         </label>
+        <label class="block">
+            <span class="text-[10px] tracking-[0.22em] text-vtr-muted uppercase">Proteína estimada (g)</span>
+            <input type="number" name="proteina_g" min="0" max="999" placeholder="Ex.: 40" class="vtr-input mt-1.5">
+            <p class="text-[10px] text-vtr-muted mt-1.5">Estimativa da refeição completa. 0 = não contabilizado.</p>
+        </label>
     </x-form-modal>
 
     {{-- Editar refeições (uma única vez por id) --}}
@@ -395,6 +433,10 @@
                     <span class="text-[10px] tracking-[0.22em] text-vtr-muted uppercase">Descrição</span>
                     <input type="text" name="descricao" maxlength="160" value="{{ $item['descricao'] }}" class="vtr-input mt-1.5">
                 </label>
+                <label class="block">
+                    <span class="text-[10px] tracking-[0.22em] text-vtr-muted uppercase">Proteína estimada (g)</span>
+                    <input type="number" name="proteina_g" min="0" max="999" value="{{ $item['proteina_g'] ?? 0 }}" class="vtr-input mt-1.5">
+                </label>
             </x-form-modal>
         @endforeach
     @endforeach
@@ -407,6 +449,25 @@
                    value="{{ number_format($hidratacao['consumido'], 1, '.', '') }}" class="vtr-input mt-1.5">
             <p class="text-[10px] text-vtr-muted mt-1.5">Meta: {{ number_format($hidratacao['meta'], 1, ',', '.') }} L · cada copo ≈ 0,3 L</p>
         </label>
+    </x-form-modal>
+
+    {{-- Atualizar peso (para cálculo automático da meta de proteína) --}}
+    <x-form-modal id="modal-peso" title="Meu Peso" icon="dumbbell" :action="route('perfil.update')" method="PUT" okLabel="Salvar">
+        <label class="block">
+            <span class="text-[10px] tracking-[0.22em] text-vtr-muted uppercase">Peso atual (kg)</span>
+            <input type="number" step="0.1" min="30" max="300" name="peso_kg"
+                   value="{{ $profile->peso_kg ? number_format((float)$profile->peso_kg, 1, '.', '') : '' }}"
+                   placeholder="Ex.: 82.5" class="vtr-input mt-1.5">
+            <p class="text-[10px] text-vtr-muted mt-1.5">
+                Meta de proteína = peso × 2 g/kg · Padrão para treino de força.
+            </p>
+        </label>
+        @if($profile->peso_kg)
+            <div class="text-[11px] text-vtr-muted">
+                Meta atual: <span class="text-vtr-red font-display">{{ (int)round((float)$profile->peso_kg * 2) }}g</span>
+                baseada em {{ number_format((float)$profile->peso_kg, 1, ',', '.') }} kg.
+            </div>
+        @endif
     </x-form-modal>
 
 @endsection
