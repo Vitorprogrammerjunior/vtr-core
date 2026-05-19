@@ -138,7 +138,7 @@
 
                 <ul class="space-y-3">
                     @foreach($exercicios as $ex)
-                        <li x-data="exData(@json($ex))"
+                        <li x-data="exData(JSON.parse(atob('{{ base64_encode(json_encode($ex)) }}')))"
                             :class="concluido ? 'vtr-card p-4 border-vtr-red/40 bg-vtr-red/5' : 'vtr-card p-4'">
                             <div class="flex items-start gap-3">
                                 <span class="w-9 h-9 rounded-full border border-vtr-border grid place-items-center text-vtr-red shrink-0">
