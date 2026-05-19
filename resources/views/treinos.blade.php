@@ -266,11 +266,10 @@
 @endsection
 
 @push('scripts')
-<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 <script>
 const _csrf = document.querySelector('meta[name=csrf-token]')?.content ?? '';
 
-function exData(ex) {
+window.exData = function exData(ex) {
     return {
         series:  ex.series.map(s => ({ n: s.n, feita: s.feita })),
         loading: false,
