@@ -117,6 +117,37 @@
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('/sw.js');
         }
+
+        // PWA Install
+        let _pwaPrompt = null;
+        window.addEventListener('beforeinstallprompt', function(e) {
+            e.preventDefault();
+            _pwaPrompt = e;
+            var btn = document.getElementById('vtr-install-btn');
+            if (btn) btn.style.display = 'flex';
+        });
+        window.addEventListener('appinstalled', function() {
+            var btn = document.getElementById('vtr-install-btn');
+            if (btn) btn.remove();
+        });
+        function vtrInstallApp() {
+            if (!_pwaPrompt) return;
+            _pwaPrompt.prompt();
+            _pwaPrompt.userChoice.then(function() { _pwaPrompt = null; });
+        }
     </script>
+
+    {{-- Botão flutuante de instalar PWA --}}
+    <button id="vtr-install-btn" onclick="vtrInstallApp()" title="Instalar VTR CORE"
+        style="display:none; position:fixed; bottom:24px; right:24px; z-index:9999;
+               align-items:center; gap:8px; padding:10px 18px;
+               background:#e60012; color:#fff; border:none; border-radius:8px;
+               font-family:'Rajdhani',sans-serif; font-weight:700; font-size:0.9rem;
+               letter-spacing:0.08em; cursor:pointer; box-shadow:0 4px 20px rgba(230,0,18,0.4);">
+        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3"/>
+        </svg>
+        INSTALAR APP
+    </button>
 </body>
 </html>
