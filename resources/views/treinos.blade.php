@@ -138,7 +138,8 @@
 
                 <ul class="space-y-3">
                     @foreach($exercicios as $ex)
-                        <li class="vtr-card p-4 {{ $ex['concluido'] ? 'border-vtr-red/40 bg-vtr-red/5' : '' }}">
+                        <li x-data="exData(@json($ex))"
+                            :class="concluido ? 'vtr-card p-4 border-vtr-red/40 bg-vtr-red/5' : 'vtr-card p-4'">
                             <div class="flex items-start gap-3">
                                 <span class="w-9 h-9 rounded-full border border-vtr-border grid place-items-center text-vtr-red shrink-0">
                                     @include('partials.icon', ['name' => $ex['icone'], 'class' => 'w-5 h-5'])
@@ -152,26 +153,32 @@
                                         <div class="text-[11px] text-vtr-muted mt-1">{{ $ex['observacao'] }}</div>
                                     @endif
 
-                                    {{-- Bubbles de série (só clicável se for hoje) --}}
+                                    {{-- Bubbles de série --}}
                                     <div class="mt-3 flex items-center gap-2 flex-wrap">
-                                        @foreach($ex['series'] as $s)
-                                            @if($treinoHoje['eh_hoje'])
-                                                <form method="POST" action="{{ route('series.toggle', ['exercise' => $ex['id'], 'serie' => $s['n']]) }}" class="contents">
-                                                    @csrf
-                                                    <button type="submit"
-                                                        class="w-10 h-10 md:w-11 md:h-11 rounded-full border-2 grid place-items-center font-display text-sm transition-colors
-                                                            {{ $s['feita']
-                                                                ? 'border-vtr-red bg-vtr-red text-white'
-                                                                : 'border-vtr-border text-vtr-muted hover:border-vtr-red/60' }}"
-                                                        title="Série {{ $s['n'] }}{{ $s['feita'] ? ' (feita)' : '' }}">
-                                                        @if($s['feita'])
-                                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5L20 7" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                                                        @else
-                                                            {{ $s['n'] }}
-                                                        @endif
-                                                    </button>
-                                                </form>
-                                            @else
+                                        @if($treinoHoje['eh_hoje'])
+                                            <template x-for="s in series" :key="s.n">
+                                                <button type="button"
+                                                    @click="toggle(s.n)"
+                                                    :disabled="loading"
+                                                    :class="s.feita
+                                                        ? 'w-10 h-10 md:w-11 md:h-11 rounded-full border-2 grid place-items-center font-display text-sm transition-colors border-vtr-red bg-vtr-red text-white'
+                                                        : 'w-10 h-10 md:w-11 md:h-11 rounded-full border-2 grid place-items-center font-display text-sm transition-colors border-vtr-border text-vtr-muted hover:border-vtr-red/60'">
+                                                    <template x-if="s.feita">
+                                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5L20 7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                                                    </template>
+                                                    <template x-if="!s.feita">
+                                                        <span x-text="s.n"></span>
+                                                    </template>
+                                                </button>
+                                            </template>
+
+                                            <button type="button" x-show="!concluido && series.length > 1"
+                                                @click="concluirTodas()"
+                                                class="ml-auto text-[10px] tracking-[0.22em] font-display border border-vtr-border rounded px-3 py-2 hover:border-vtr-red/60 transition-colors">
+                                                CONCLUIR TODAS
+                                            </button>
+                                        @else
+                                            @foreach($ex['series'] as $s)
                                                 <span class="w-10 h-10 md:w-11 md:h-11 rounded-full border-2 grid place-items-center font-display text-sm cursor-not-allowed
                                                     {{ $s['feita']
                                                         ? 'border-vtr-red/60 bg-vtr-red/40 text-white/90'
@@ -183,16 +190,7 @@
                                                         {{ $s['n'] }}
                                                     @endif
                                                 </span>
-                                            @endif
-                                        @endforeach
-
-                                        @if($treinoHoje['eh_hoje'] && ! $ex['concluido'] && $ex['series_total'] > 1)
-                                            <form method="POST" action="{{ route('exercicios.concluir', ['exercise' => $ex['id']]) }}" class="ml-auto">
-                                                @csrf
-                                                <button type="submit" class="text-[10px] tracking-[0.22em] font-display border border-vtr-border rounded px-3 py-2 hover:border-vtr-red/60 transition-colors">
-                                                    CONCLUIR TODAS
-                                                </button>
-                                            </form>
+                                            @endforeach
                                         @endif
                                     </div>
 
@@ -266,3 +264,57 @@
         </div>
     </section>
 @endsection
+
+@push('scripts')
+<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+<script>
+const _csrf = document.querySelector('meta[name=csrf-token]')?.content ?? '';
+
+function exData(ex) {
+    return {
+        series:  ex.series.map(s => ({ n: s.n, feita: s.feita })),
+        loading: false,
+
+        get concluido() {
+            return this.series.length > 0 && this.series.every(s => s.feita);
+        },
+
+        async toggle(n) {
+            if (this.loading) return;
+            const s = this.series.find(s => s.n === n);
+            if (!s) return;
+
+            // Optimistic update
+            s.feita = !s.feita;
+            this.loading = true;
+
+            try {
+                await fetch(`/treinos/exercicios/${ex.id}/series/${n}/toggle`, {
+                    method:  'POST',
+                    headers: { 'X-CSRF-TOKEN': _csrf, 'Accept': 'application/json' },
+                });
+            } catch {
+                s.feita = !s.feita; // Revert on error
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        async concluirTodas() {
+            if (this.loading) return;
+            this.series.forEach(s => s.feita = true); // Optimistic
+            this.loading = true;
+
+            try {
+                await fetch(`/treinos/exercicios/${ex.id}/concluir`, {
+                    method:  'POST',
+                    headers: { 'X-CSRF-TOKEN': _csrf, 'Accept': 'application/json' },
+                });
+            } finally {
+                this.loading = false;
+            }
+        },
+    };
+}
+</script>
+@endpush

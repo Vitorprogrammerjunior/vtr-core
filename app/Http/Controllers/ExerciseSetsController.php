@@ -9,7 +9,7 @@ use Illuminate\Support\Carbon;
 class ExerciseSetsController extends Controller
 {
     /** Liga/desliga uma série específica de hoje. Cria se não existir (ligando). */
-    public function toggle(Exercise $exercise, int $serie)
+    public function toggle(Request $request, Exercise $exercise, int $serie)
     {
         abort_if($serie < 1 || $serie > (int) $exercise->series, 422, 'Série inválida.');
 
@@ -29,6 +29,10 @@ class ExerciseSetsController extends Controller
                 'serie_num'   => $serie,
                 'feita'       => true,
             ]);
+        }
+
+        if ($request->wantsJson()) {
+            return response()->json(['ok' => true, 'feita' => $set ? $set->feita : true]);
         }
 
         return back();
@@ -66,7 +70,7 @@ class ExerciseSetsController extends Controller
     }
 
     /** Marca todas as séries do exercício como feitas (atalho 1-toque). */
-    public function completeAll(Exercise $exercise)
+    public function completeAll(Request $request, Exercise $exercise)
     {
         $hoje = Carbon::today()->toDateString();
         for ($n = 1; $n <= (int) $exercise->series; $n++) {
@@ -84,6 +88,10 @@ class ExerciseSetsController extends Controller
                     'feita'       => true,
                 ]);
             }
+        }
+
+        if ($request->wantsJson()) {
+            return response()->json(['ok' => true]);
         }
 
         return back();
