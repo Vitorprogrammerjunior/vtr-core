@@ -113,5 +113,10 @@
         @yield('content')
     </div>
     @stack('scripts')
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw.js');
+        }
+    </script>
 </body>
 </html>
